@@ -1,76 +1,157 @@
 # Galaxy Watch Google Wallet Remap
 
-A minimal, event-driven Wear OS app that remaps the reserved Samsung Pay button
-on a Samsung Galaxy Watch to Google Wallet.
+A minimal Wear OS app that remaps the Samsung Pay hardware-button shortcut to
+Google Wallet.
 
-- Short press: performs the normal Back action.
-- Long press: opens Google Wallet.
+- **Short press:** performs the normal Back action.
+- **Long press:** opens Google Wallet.
 
-The accessibility service consumes only `KEYCODE_STEM_PRIMARY`. It does not
-monitor Samsung Pay, poll, read `logcat`, hold a wake lock, use the network or
-sensors, schedule work, or run a timer while idle. A single delayed callback
-exists only while the button is physically held.
+Tested on a **Samsung Galaxy Watch Ultra (2025)**.
 
-## Prerequisites
+## Requirements
 
-Google Wallet must be installed under its standard Wear OS package name:
-`com.google.android.apps.walletnfcrel`.
+- A Samsung Galaxy Watch running Wear OS.
+- Google Wallet installed on the watch.
+- A computer with [Android SDK Platform Tools](https://developer.android.com/tools/releases/platform-tools).
+- The watch and computer connected to the same network.
+- The Version 1 APK from the [GitHub Releases page](https://github.com/pc386/galaxy-watch-google-wallet-remap/releases/latest).
 
-Samsung Pay launches from a separate Samsung system handler even when the app
-consumes the key event. Disable Samsung Pay for the current watch user with ADB:
+## Install and set up
+
+### 1. Enable developer options on the watch
+
+1. Open **Settings** on the watch.
+2. Go to **About watch → Software information**.
+3. Tap **Software version** several times until Developer mode is enabled.
+4. Return to Settings and open **Developer options**.
+5. Enable **ADB debugging**.
+6. Enable **Wireless debugging**.
+
+Menu names can vary slightly between Wear OS versions.
+
+### 2. Pair the watch with ADB
+
+Open **Wireless debugging → Pair new device** on the watch. It displays an IP
+address, pairing port, and pairing code.
+
+On the computer, run:
+
+```shell
+adb pair WATCH_IP:PAIRING_PORT
+```
+
+Enter the pairing code shown on the watch when prompted. For example:
+
+```shell
+adb pair 192.168.1.191:42919
+```
+
+### 3. Connect to the watch
+
+Return to the main **Wireless debugging** screen. Use the connection port shown
+there—not the temporary pairing port:
+
+```shell
+adb connect WATCH_IP:CONNECTION_PORT
+adb devices
+```
+
+The watch should appear with the state `device`.
+
+### 4. Install the APK
+
+Download `galaxy-watch-google-wallet-remap-v1.apk` from the Releases page, open
+a terminal in its download directory, and run:
+
+```shell
+adb install -r galaxy-watch-google-wallet-remap-v1.apk
+```
+
+The command should finish with `Success`.
+
+If ADB reports more than one device, copy the desired identifier from
+`adb devices` and specify it explicitly:
+
+```shell
+adb -s 'DEVICE_IDENTIFIER' install -r galaxy-watch-google-wallet-remap-v1.apk
+```
+
+### 5. Disable Samsung Pay on the watch
+
+Samsung launches Pay from a separate system handler, even when the remapper
+handles the button. Disable Samsung Pay for the current watch user:
 
 ```shell
 adb shell pm disable-user --user 0 com.samsung.android.samsungpay.gear
 ```
 
-This is reversible and does not delete Samsung Pay data. Restore it with:
+This is reversible and does not delete Samsung Pay data.
+
+With multiple connected devices, use:
 
 ```shell
-adb shell pm enable --user 0 com.samsung.android.samsungpay.gear
+adb -s 'DEVICE_IDENTIFIER' shell pm disable-user --user 0 com.samsung.android.samsungpay.gear
 ```
 
-## Toolchain
+### 6. Enable the remapping service
 
-- Android Gradle Plugin 9.3.0
-- Gradle 9.5.0
-- AGP built-in Kotlin with Compose compiler 2.3.21
-- compile/target SDK 37; minimum SDK 30 for Galaxy Watch4
-- Compose BOM 2026.06.00
-- Wear Compose Material 3 1.6.2
+1. Open **Galaxy Watch Google Wallet Remap** from the watch app launcher.
+2. Tap **Accessibility settings**.
+3. Open **Installed apps** or **Installed services**.
+4. Select **Galaxy Watch Google Wallet Remap**.
+5. Enable the service and confirm the warning.
+6. Return to the app and confirm it shows **Remapping enabled** and
+   **Google Wallet found**.
 
-JDK 17 is required. On Apple Silicon macOS:
-
-```shell
-brew install openjdk@17
-export PATH="/opt/homebrew/opt/openjdk@17/bin:$PATH"
-export ANDROID_HOME="/opt/homebrew/share/android-commandlinetools"
-```
-
-## Build and install
-
-From the `GalaxyWatchGoogleWalletRemap` directory:
-
-```shell
-./gradlew :app:assembleDebug
-adb install -r app/build/outputs/apk/debug/app-debug.apk
-```
-
-Open **Galaxy Watch Google Wallet Remap**, select **Accessibility settings**,
-and enable the service. If Wear OS blocks the sideloaded accessibility service
-as a restricted setting:
+If Wear OS blocks the sideloaded accessibility service as a restricted setting,
+run this command and then try enabling it again:
 
 ```shell
 adb shell appops set com.galaxywatch.googlewalletremap ACCESS_RESTRICTED_SETTINGS allow
 ```
 
-Because this project has a new package identity, disable the old **GW4 Wallet
-Remap** accessibility service before enabling this one.
+### 7. Test the button
 
-## Disable or uninstall
+- Briefly press the Samsung Pay button: it should perform Back.
+- Hold the Samsung Pay button for approximately 650 ms: Google Wallet should
+  open without Samsung Pay appearing.
 
-Disable the service under the watch's accessibility settings to restore normal
-key handling. To uninstall over ADB:
+After setup, you can disable **Wireless debugging** and **ADB debugging** on the
+watch. The remapper does not require an ADB connection during normal use.
+
+## Restore Samsung Pay or uninstall
+
+Disable **Galaxy Watch Google Wallet Remap** in the watch's accessibility
+settings before restoring Samsung Pay:
+
+```shell
+adb shell pm enable --user 0 com.samsung.android.samsungpay.gear
+```
+
+To uninstall the remapper:
 
 ```shell
 adb uninstall com.galaxywatch.googlewalletremap
+```
+
+## Battery use
+
+The service is event-driven and listens only for `KEYCODE_STEM_PRIMARY`. It
+does not poll, read `logcat`, acquire a wake lock, access the network or sensors,
+schedule background work, or run a timer while idle. A single delayed callback
+exists only while the hardware button is physically held.
+
+## Build from source
+
+The project requires JDK 17, Android SDK Platform 37, and Android Build Tools
+36.0.0.
+
+```shell
+./gradlew :app:assembleDebug
+```
+
+The debug APK is written to:
+
+```text
+app/build/outputs/apk/debug/app-debug.apk
 ```

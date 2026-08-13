@@ -12,7 +12,16 @@ android {
         minSdk = 30
         targetSdk = 37
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1"
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            signingConfig = signingConfigs.getByName("debug")
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
+        }
     }
 
     buildFeatures {
