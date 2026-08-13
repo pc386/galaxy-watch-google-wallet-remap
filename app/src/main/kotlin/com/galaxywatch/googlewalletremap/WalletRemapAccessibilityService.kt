@@ -11,8 +11,10 @@ import android.view.accessibility.AccessibilityEvent
 
 class WalletRemapAccessibilityService : AccessibilityService() {
     private val handler = Handler(Looper.getMainLooper())
+    private var foregroundPackageName: String? = null
     private var stemPressed = false
     private var longPressTriggered = false
+    private var passThroughCurrentPress = false
 
     private val triggerLongPress = Runnable {
         if (stemPressed) {
@@ -31,15 +33,29 @@ class WalletRemapAccessibilityService : AccessibilityService() {
 
         return when (event.action) {
             KeyEvent.ACTION_DOWN -> {
-                if (!stemPressed) {
+                if (event.repeatCount == 0) {
+                    resetPressState()
+
+                    passThroughCurrentPress =
+                        ForegroundAppPolicy.shouldPassThroughStemButton(foregroundPackageName)
+                    if (passThroughCurrentPress) {
+                        Log.i(LOG_TAG, "Passing stem button through to Samsung Health")
+                        return false
+                    }
+
                     stemPressed = true
-                    longPressTriggered = false
                     handler.postDelayed(triggerLongPress, longPressDelayMillis())
                 }
-                true
+
+                !passThroughCurrentPress
             }
 
             KeyEvent.ACTION_UP -> {
+                if (passThroughCurrentPress) {
+                    resetPressState()
+                    return false
+                }
+
                 if (!stemPressed) return false
 
                 stemPressed = false
@@ -49,20 +65,30 @@ class WalletRemapAccessibilityService : AccessibilityService() {
                     performGlobalAction(GLOBAL_ACTION_BACK)
                 }
 
+                longPressTriggered = false
                 true
             }
 
-            else -> true
+            else -> !passThroughCurrentPress
         }
     }
 
-    override fun onAccessibilityEvent(event: AccessibilityEvent) = Unit
+    override fun onAccessibilityEvent(event: AccessibilityEvent) {
+        event.packageName?.toString()?.let { foregroundPackageName = it }
+    }
 
     override fun onInterrupt() = Unit
 
     override fun onDestroy() {
-        handler.removeCallbacks(triggerLongPress)
+        resetPressState()
         super.onDestroy()
+    }
+
+    private fun resetPressState() {
+        handler.removeCallbacks(triggerLongPress)
+        stemPressed = false
+        longPressTriggered = false
+        passThroughCurrentPress = false
     }
 
     private fun longPressDelayMillis(): Long = maxOf(

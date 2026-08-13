@@ -11,8 +11,8 @@ android {
         applicationId = "com.galaxywatch.googlewalletremap"
         minSdk = 30
         targetSdk = 37
-        versionCode = 1
-        versionName = "1"
+        versionCode = 2
+        versionName = "1.1"
     }
 
     buildTypes {
@@ -42,4 +42,5 @@ dependencies {
     implementation(libs.wear.compose.material3)
 
     debugImplementation(libs.compose.ui.tooling)
+    testImplementation("junit:junit:4.13.2")
 }

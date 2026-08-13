@@ -5,6 +5,8 @@ Google Wallet.
 
 - **Short press:** performs the normal Back action.
 - **Long press:** opens Google Wallet.
+- **In Samsung Health:** leaves the button untouched so its long-press workout
+  controls continue to work.
 
 Tested on a **Samsung Galaxy Watch Ultra (2025)**.
 
@@ -14,7 +16,7 @@ Tested on a **Samsung Galaxy Watch Ultra (2025)**.
 - Google Wallet installed on the watch.
 - A computer with [Android SDK Platform Tools](https://developer.android.com/tools/releases/platform-tools).
 - The watch and computer connected to the same network.
-- The Version 1 APK from the [GitHub Releases page](https://github.com/pc386/galaxy-watch-google-wallet-remap/releases/latest).
+- The latest APK from the [GitHub Releases page](https://github.com/pc386/galaxy-watch-google-wallet-remap/releases/latest).
 
 ## Install and set up
 
@@ -60,11 +62,11 @@ The watch should appear with the state `device`.
 
 ### 4. Install the APK
 
-Download `galaxy-watch-google-wallet-remap-v1.apk` from the Releases page, open
+Download `galaxy-watch-google-wallet-remap-v1.1.apk` from the Releases page, open
 a terminal in its download directory, and run:
 
 ```shell
-adb install -r galaxy-watch-google-wallet-remap-v1.apk
+adb install -r galaxy-watch-google-wallet-remap-v1.1.apk
 ```
 
 The command should finish with `Success`.
@@ -73,7 +75,7 @@ If ADB reports more than one device, copy the desired identifier from
 `adb devices` and specify it explicitly:
 
 ```shell
-adb -s 'DEVICE_IDENTIFIER' install -r galaxy-watch-google-wallet-remap-v1.apk
+adb -s 'DEVICE_IDENTIFIER' install -r galaxy-watch-google-wallet-remap-v1.1.apk
 ```
 
 ### 5. Disable Samsung Pay on the watch
@@ -136,10 +138,12 @@ adb uninstall com.galaxywatch.googlewalletremap
 
 ## Battery use
 
-The service is event-driven and listens only for `KEYCODE_STEM_PRIMARY`. It
-does not poll, read `logcat`, acquire a wake lock, access the network or sensors,
-schedule background work, or run a timer while idle. A single delayed callback
-exists only while the hardware button is physically held.
+The service is event-driven. It listens for `KEYCODE_STEM_PRIMARY` and minimal
+window-state changes needed to recognize when Samsung Health is foreground. It
+does not read screen contents, poll, read `logcat`, acquire a wake lock, access
+the network or sensors, schedule background work, or run a timer while idle. A
+single delayed callback exists only while the hardware button is physically
+held.
 
 ## Build from source
 
