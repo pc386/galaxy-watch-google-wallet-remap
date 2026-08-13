@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Galaxy Watch Google Wallet Remap</string>
+    <string name="accessibility_service_label">Galaxy Watch Google Wallet Remap</string>
+    <string name="accessibility_service_description">Opens Google Wallet when the Samsung Pay button is held, while preserving its normal short-press Back action.</string>
+    <string name="screen_title">Google Wallet Remap</string>
+    <string name="service_enabled">Remapping enabled</string>
+    <string name="service_disabled">Remapping disabled</string>
+    <string name="wallet_available">Google Wallet found</string>
+    <string name="wallet_unavailable">Google Wallet is not installed</string>
+    <string name="open_accessibility_settings">Accessibility settings</string>
+    <string name="remap_instructions">Short press: Back\nLong press: Google Wallet</string>
+    <string name="power_note">No polling or background timer is used. The service wakes only for hardware-key events.</string>
+</resources>
